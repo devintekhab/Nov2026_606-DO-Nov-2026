@@ -1,0 +1,109 @@
+Day 14 - kubernetics advanced concepts and multi-enviroment deployment
+
+🔹 Ansible - setup ngnix with reverse proxy
+- name: setup ngnix with reverse proxy
+  hosts: all
+  become: yes
+  tasks:
+    - name: install ngnix
+      yum: 
+        name: ngnix
+        state: present
+    - name: configure ngnix as reverse proxy
+      template:
+           src: reverse-proxy.conf.j2
+           dest: /etc/ngnix/conf.d/reverse-proxy.conf
+    - name: restart ngnix service
+      service: 
+         name: ngnix
+         state: restatred
+         enabled: yes
+
+🔹 Terraform - Create s3 bucket with versioning and logging resources "aws_s3_bucket" "devintekhab_bucket" {
+    bucket = "devintekhab-bucket"
+    versioning {
+        enabled: true
+    }
+    logging {
+        target_bucket = 'devintekhab-log-bucket'
+        target_prefix= 'logs/'
+    }
+}
+
+🔹 kubernetics - ingress with ngnix controller
+apiVersion: networking.k8s.io/v1
+kind: ingress
+metadata:
+    name: devintekhab-ingress
+    annotations:
+         ngnix.ingress.kubernetes.io/rewrite-target: /
+
+spec: 
+ rules:
+ - hosts:
+   http:
+     paths: 
+     - path: /
+       pathType: Prefix
+       backend: 
+          service: 
+            name: devintekhab-service
+            port:
+              number: 80
+
+🔹 jenkinsfile - build ,test, and deploy with stages
+
+pipeline {
+    agent any
+    stages {
+        stage("build"){
+            steps {
+                echo "building dokcer image'
+                docker.build("devintekhab-web-app")
+            }
+        }
+        stage("test"){
+            steps {
+                echo "Running test"
+            }
+        }
+        stage('deploy to kubernetics') {
+            steps {
+                script {
+                    sh 'kubectl apply -f kubernetes/deployemrnt.yaml
+                }
+            }
+        }
+    }
+}
+
+🔹  gitlab CI/CD - multi-stage deployment with helm
+
+stages: 
+  - build
+  - push
+  - deploy
+  
+build:
+  stage: build
+  script: 
+   - docker build -t devintekhab-web-app
+
+
+push:
+  stage: push
+  script:
+  - docker login -u "$CI_REGISTERY_USER" -p "$CI_REGISTERY_PASSWORD" 
+  - docker push devintekhab-web-app
+  
+deploy:
+  stage: deploy
+  script:
+  - helm: upgrade -- install devintekhab-ngnix devintekhab/ngnix-ingress
+
+
+🔹 docker
+# CMD VS ENTRYPOINT
+FROM ubunto
+ENTRYPOINT ["echo"]
+CMD ["hello devintekhab"]
