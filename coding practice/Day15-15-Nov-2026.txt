@@ -1,0 +1,40 @@
+Day - 15 Automation with terraform ,ansible and ci/cd pipeline 
+
+🔹Ansible - deploy a web application to multiple hosts
+
+name: deploy web application to multiple hosts hosts: all become: yes
+  
+  name: copy web application files copy: src:/path/to/web/app/ dest: /var/www/html/
+
+  name: start web app service service: name:apache2 state: staretd enabled:yes 
+  🔹 Terraform -create EC2 with ELB resourcs "aws_lb" "devintekhab_lb" {name = "devintekhab-lb" internal = false load_blancer_type= "application" security_groups = [aws_security-group.allow_ssh_http.id] subnets = [aws_subnet_public.id]}
+
+
+  resources "aws_instance" "devintekhab_ec2" {ami = "ami-0abcd123bcdabcd123" instance-type = "t2.micro" security_group = [aws_security_groupallow.ssh_http.name]}
+
+
+  tags= {Name: "devintekhab-EC2"}
+  🔹 Kubernets - helm charts for redis with persistence helm install devitekhab-redis --set persistence.enabled= true --set persistence.size=8G1 🔹 Jenkinsfile - multiple enviroment deployment pipeline {agent ant enviroment {IMAGE_NAME = "devintekhab-web-app" DEPOY_ENV = "production"} stages("build") {steps {echo "building docker image..."  docker.build("${env.IMAGE_NAME})}} stage("test"){steps {echo "running test"}} stage("deploy to kubernets"){steps {script{if (env.DEPLOY_ENV=="production" ){sh 'kubectl apply -f kubernets/prods-deployment.yaml} else {sh 'kubectl apply -f kubernets/dev-deployment.yaml}}}} }
+
+  🔹 Gitlab CI/CD - Enviroment-specific deployment stages
+
+  build
+  push
+  deploy
+
+build: stage:build script: - docker -t devintekhab-web-app
+
+push: stage: push script: -dokcer login -u "$CI_REGISTERY_USER" -p "$CI_REGISTERY_PASSWORD" -docker push devintekhab
+
+deploy:stage:deploy script: -| if["$CI_COMMIT_REF_NAME"=="main"]; then kubectl apply -f kubernets/prod-deployement.yaml else kubectl apply -f kubernets/dev-development.yaml fi
+
+🔹 Docker
+
+
+ MULTI RUN COMMAND
+
+ FROM ubunto RUN apt update &&
+ apt install curl -y &&
+ apt install vim CMD ["echo","helloworld"]
+
+
