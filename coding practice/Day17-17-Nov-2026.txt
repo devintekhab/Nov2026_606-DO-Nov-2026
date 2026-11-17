@@ -1,0 +1,153 @@
+Day - 17 Multi-Cloud Deployment ,Auto-healing, and advanced ci/cd
+
+
+🔹 Ansible - Auto-healing web servers with systemd
+
+- name: Configure Auto-healing for web serever
+  hosts: all
+  become: yes
+  tasks: 
+    - name: Ensure ngnix service is running
+      service: 
+         name: ngnix
+         state: started
+         enabled: yes
+    - name: setup auto-restart for ngnix service
+      lineinfile: 
+          path: /etc/systemd/ngnix.service.d/override.conf
+          line: 'Resart=always"
+          create: yes
+    
+    - name: Reload systemd
+      command: yes
+
+🔹 Terraform - Multi-Cloud Infrastructure with AWS and Azure 
+
+# AWS VPC
+
+resuorcs "aws_vpc" "main" {
+    cidr_block = '10.0.0.0/16'
+}
+
+# EC2 Instance in aws
+
+resource "aws_instance" "devintekhab_ec2" {
+    ami            = "ami-0abcd123abcd123abc"
+    instance_type  = "t2.micro"
+    region         = "us-east-1"
+}
+
+# virtual machine in azure
+
+resource 'azurerm_linix_virtual_machine" "devintekhab_vm" {
+     name            = "devintekhab-azure-rm"
+     resuorces_group_name = "azurerm_resources_group.main.name
+     location     = azurerm_resources_group.main.location
+     size = "standard_B1s"
+     admin_username  = "azureuser"
+     admin_password = "P@ssw0rd123"
+}
+
+🔹 Kubernets - Self-Healing with liveness and readingness Probes
+
+apiVersion: apps/v1
+kind: deployment
+metadata: 
+   name: devintekhab-web-app
+spec: 
+  replicas: 3
+  selector: 
+    matchlabels: 
+       app: devintekhab-web-app
+  template: 
+    metadata:
+      labels:
+        app: devintekhab-web-app
+
+    spec: 
+     containers: 
+       - name: ngnix
+         image: ngnix
+         ports:
+           - containerPort: 80
+         livenessProbe: 
+             httpGet:
+                path: /healthz
+                port: 80
+             initialDelaySeconds: 5
+             periodsSeconds: 10
+             readinessProbe: 
+             httpGet:
+                path: /healthz
+                port: 80
+             initialDelaySeconds: 5
+             periodsSecond: 10
+
+
+🔹 Jenkinsfile - Rolling Deployment with kubernets
+
+pipeline {
+    agent any 
+    enviroment {
+        IMAGE_NAME = 'devintekhab_web-app'
+    }
+    stages {
+         stage("build"){
+            steps {
+                echo "Building Docker image..."
+                docker.build("${env.IMAGE_NAME}")
+            }
+         }
+         stage("test"){
+            steps {
+                echo 'Runnig test'
+            }
+         }
+         stage ('deploy to kubernets){
+             steps {
+                script {
+                    sh 'kubectl apply -f kubernets/deplymentyal'
+                    s 'kubectl rollout status depoyment/devintekhab-wb-app'
+                }
+             }
+         }
+    }
+}
+
+🔹 GitLab CI/CD - Multi-Cloud Deployment
+stages:
+  - build
+  - push
+  - deloy
+  
+build:
+  stage: build
+  script:
+    - docker build -t devintehab-web-app
+  
+push:
+  stage: push
+  script: 
+   - docker login -u '$CI_REGISTERY_USER" -p '$CI_REGISTRY_PASSWORD"
+   - docker push devintekab-web-app
+
+
+deploy_aws:
+   stage: deply
+   sscript:
+    -kubectl --cntext=aws-cluster apply -f kubernets /deplynt.yaml
+
+
+deloy_azure:
+     stage:deploy
+     script:
+       - kubectl --context=azure-cluster apply -f kubernets/deployent.yaml
+  
+🔹 dokcer
+# MYSQL Container (Note - Here '\' means to be continues - it can be written in a)
+
+docker run -d --name devintekhab-mysql -e MYSQL_ROOT_PASSWORD=root mysql:8
+
+# Real Path
+/var/lib/mysql
+
