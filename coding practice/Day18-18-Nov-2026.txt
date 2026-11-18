@@ -1,0 +1,138 @@
+Day - 18 High Availability ,Multi Region and auto-scaling
+
+🔹 Ansible - Configure HAProxy for load balancing
+
+- name: Setup HAProxy Load Balancer
+  hosts: all
+  become: yes
+  tsaks:
+    - name: install HAProxy
+      yum:
+       name: haproxy
+       state: present
+    - name: configure HAProxy
+      template: 
+        src: haproxy.cfg.j2
+        dest: /etc/haproxy/haproxy.cfg
+    - name: Start HAPRoxy Service
+      service:
+        name: haproxy
+        state: started
+        enabled: yes
+
+
+🔹 Terraforn - Multi-Region Atuo-scaling group with ALB
+resources "aws_lab" devintekhab_lb" {
+    name           = "devintekhab-lb"
+    internal       = false
+    laod_balancer_type = 'application'
+    security_groups  = [aws_security_group.allow_ssh_http.id]    
+    subnets     = [aws_subnet.public.id,aws_subnet.public2.id]
+    
+}
+resources 'aws_auto_scaling_group' 'devintekhab_asg' {
+     desired_capacity = 3
+     max_size = 5
+     min_size = 2
+     vpc_zone_identifier = [aws_subnet.public.id,aws_subnet.public2.id]
+     launch_configration = aws_launch_configration.devintekhab_config.id
+
+}
+🔹 Kubernets - Horizontal pod autoscaler with multiple Replicas
+
+apiVersion: app/v1
+kind: deployment
+metadata:
+     name: devintekhab-web-app
+spec: 
+  replicas: 3
+  selector: 
+     matchlabels: 
+        app: devintekhab-web-app
+  template:
+      metadata:
+          labels:
+            app: devintekhab-web-app
+      spec:
+        containers:
+           -  name: ngnix
+           -  image: ngnix
+              ports:
+                - containers: 80
+  
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: 
+   name: devintekhab-web-app-hpa
+spec:
+  scaleTragetRef:
+     apiVersion: apps/v1
+     kind: deployment
+     name: devintekhab-web-app
+  minReplica: 2
+  maxReplica: 10
+  targetCPUUtilizationPercntage: 80
+
+🔹 Jenkinsfile - Blue-green deployment stragety
+
+pipeline {
+    agent any {
+        stages {
+            stage("build"){
+                steps {
+                    echo "Building docker image"
+                    docker.build("devintekhab-wb-app")
+                }
+            }
+            stage("test"){
+                steps {
+                    echo "Runnnig test"
+                }
+            }
+            stage("blue-green deployment"){
+                steps {
+                    script {
+                        sh 'kubectl apply -f kubernets/blue-deployment.yaml
+                        sh 'kubectl apply -f kubernets/green-deployment.yaml
+                        sh 'kubectl rollout status deployment/blue-depoyment
+                        sh 'kubectl rollout status deployment/green-deployment
+                    }
+                }
+            }
+        }
+    }
+}
+
+🔹 Gitlab C/CD - blue - green deployment with kubernets
+
+stage:
+  - build
+  - push
+  - deploy
+  
+build:
+   stage: build
+   script: 
+   - docker build -t devintekhab-web-app
+  
+push:
+ stage: push
+ script:
+   - docker login -u "$CI_REGISTERY_USER" -p "$CI_REGISTERY_PASSWORD"
+   - docker push devintekhab-web-app
+
+deploy:
+  stage: deploy
+  script:
+    - kubectl apply -f kubernets/blue-deployment.yaml
+    - kubectl apply -f kubernets/green-deployment.yaml
+    - kubectl rollout status deployment/blue-deployment
+    - kubetl rollout status deployment/green-deployment
+  
+🔹 docker
+# redis Container
+docker run -d --name devintekhab-redis redis
+
+# real path
+/data
