@@ -1,0 +1,126 @@
+Day - 19 Advanced Monitoring , Logging and securiy
+
+🔹 Ansible - setup Promethous for monitoring
+
+ name: Install Promethous for monitoring 
+ hosts: all
+
+    name: install Promethous dependenies yum: name:-promethous-prometheus-node-exporter state:present
+
+    name: Start Promethous service service: name: prometheus state: started enabled: yes
+
+
+     🔹 Terraform - Setup aws Cloudwatch for monitoring resources
+     "aws_cloudwatch_log_group" "devintekhab_log_group" {
+        name  = "devintekhab-dev-log"
+     }
+
+resources "aws_cloudwatch_log_stream" "devintekhab_log_stream" {
+    log_group_name  = aws_cloudwatch_log_group.devintekhab_log_group_name 
+    name     = "devintekhab_log_stream"
+}
+
+🔹 Kubernets - deploy fluentd for logging
+
+apiVersion: apps/v1
+kind: deployment
+metadata:
+    name: fluentd
+spec:
+  replicas: 1
+  selector:
+      matchLabels:
+          app: fleuntd
+ template:
+     metadata: 
+         labels: 
+           app: fluentd
+
+     spec: 
+       containers: 
+             - name:
+               image: fluentd/fluentd
+               ports:
+                 - container:
+                      containerPort: 24224
+
+
+apiVersion:v1
+kind: deployment
+metadata:
+      metadata:
+            name: fluentd
+spec:
+  selector:
+     app: fluentd
+     ports:
+       - protocol:TCP
+       - port: 24224
+  
+🔹 Jenkinsfile - Inetgerating Promethous monitoring in Pipeline 
+
+pipeline {
+    agent any stages {
+        stage("Build"){
+            steps {
+                echo "building docker image'
+                docker.build('devintekhab-web-app')
+            }
+        }
+        stage("test"){
+            steps{
+                echo "running test"
+            }
+        }
+        stage("monitor deployment"){
+            steps{
+                script {
+                    sh 'kubectl apply -f kubernets/deployment.yaml
+                    sh 'kubectl/deployment.yaml'
+                    sh 'kubectl get pods --watch'
+                }
+            }
+        }
+    }
+}
+
+
+🔹 Gitlab CI/CD - prometheus and logging Integration stages
+
+build
+push
+deploy
+
+build:
+  stage: build
+  script:
+   - dcoker build -t devintekhab-web-app
+
+push:
+ stage: push
+ script:
+  - docker build login -u "$CI_REGISTRY_USER" -p "$CI_REGISTERY_PASSWORD"
+  - docker push devintekhab-web-app
+  
+deploy:
+  stage: deploy
+  script:
+  - kubectl apply -f kubernets/deployment.yaml
+  - kubectl get pods --watch
+  
+🔹 DOCKER
+
+FLASK APPLICATION (PYTHON)
+
+from flask import Flask app=Flask(name) @app.route("/") def home(): return "Hellow devintekhab"
+
+app.run(hsot='0.0.0.0' port=5000)
+
+DOCKER FILE
+
+FROM python:3.11 WORKDIR /opt/devintekhab/flask-app 
+
+COPY ./opt/devintekhab/flask-app/ RUN pip
+
+install flask CMD['python','/opt/devintekhab/flask-app/app.py']
+
