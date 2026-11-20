@@ -1,0 +1,104 @@
+Day - 20 Security, Hardening and Compliance
+🔹 Ansible - Configure Firewall wih iptables
+
+ name: Configure firewall with iptables hosts: all become: yes tasks: 
+
+  name: Set defualt ploicies to drop all trafic command: iptables -P INPUT DROP
+
+  name: Allow SSH and HTTP traffic command: iptabels -A INPUT -p tcp --dport 22 j ACCEPT 
+  command: iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+
+  name: Save iptables configration command: service iptabels 
+
+  🔹 Terraform - Configure Security Groups for EC2 
+
+  resources "aws_security_group" "devintekhab_sg" {
+         name_prefix = "devintekhab_sg"
+         description = "Allow SSH and HTTP"
+  }
+
+ingress {
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+    cidr_block = ['0.0.0.0/0']
+}
+
+ingress {
+    from_port = 80
+    to_port   = 80
+    protocol  = "tcp"
+    cidr_block = ['0.0.0.0/0']
+}
+
+🔹 Kubernets - RBAC Configration for Access Control 
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+     name: devintekhab-cluster-admin
+     subject:
+
+   kind: User
+   name:  devintekhab-user
+   apiGroup: rbac.authorization.k8s.io
+   roleRef:
+       kind: clustorRole
+   name: cluster-admin
+   apiGroup: rbac.authorization.k8s.io
+
+🔹 Jenkinsfile - secure Credentials Managment 
+
+pipeline {
+    agent any Enviroment {
+        REGISTERY_PASSWORD = credentials("docker-registery-password")
+    }
+    stages {
+        stage("build"){
+            steps {
+                echo "building docker image...."
+                docker.build("devintekhab-web-app")
+            }
+        }
+        stage("push"){
+            steps{
+                script {
+                    docker.withRegistry('https://docker.io',docker-credentials'){
+                        docker.image('devintekhab-web-app').push('latest')
+                    }
+                }
+            }
+        }
+    }
+}
+
+🔹  Gitlab CI/CD - secure deployment with secrets management stages
+
+build
+push
+deploy
+
+build:
+  stage:build
+  script: -docker build -t devintekhab-web-app
+
+push:
+  stage: push
+  script: 
+  -  docker login -u "$CI_REGISTERY_USER" -p "$CI_REGISTERY_PASSWORD"
+  - docker push devintekhab-web-app
+
+deploy:
+   stage: deploy
+   script: 
+     - kubectl apply -f kubernets/deployment.yaml
+     -  kubectl get pods -- watch
+  
+  🔹 Docker
+
+  Docker Networking
+
+docker network create devintekhab-network run -dit --name c1 --network devintekhab-network 
+
+ubunto docker run -dit --name c2 --network devintekhab-network ubunto
+
