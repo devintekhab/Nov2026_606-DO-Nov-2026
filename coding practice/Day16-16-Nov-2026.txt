@@ -1,0 +1,141 @@
+Day 16 - Advanced cloudFormation & multoRegion deployment  🔹 Ansible - create and start EC2 Instance
+
+---
+- name: Launch EC2 instance in us-east-1
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Launch EC2 instance in us-east-1
+      amazon.aws.ec2_instance:
+        name: devintekhab-ec2-us-east-1
+        key_name: devintekhab-key
+        region: us-east-1
+        instance_type: t2.micro
+        image_id: ami-0abcd1234bcd1230abcd1
+        wait: true
+      register: ec2_east
+
+- name: Launch EC2 instance in us-west-1
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Launch EC2 instance in us-west-1
+      amazon.aws.ec2_instance:
+        name: devintekhab-ec2-west-1
+        key_name: devintekhab-key
+        region: us-west-1
+        instance_type: t2.micro
+        image_id: ami-0abcd1234abcd1234
+        wait: true
+      register: ec2_west
+
+resuorces "aws_vpc" "us_west_vpc" {cidr_block = "10.1.0.0/16" region= "us-west-1"}
+
+resources "aws_instance" "devintekhab_ec2_us_east" {ami= "ami-0abcd1234abcd1234" instance_type="t2.micro" region:"us-east-1" }
+
+
+resources "aws_instance" "devintekhab_ec2_us_west" {
+   
+   ami="ami-0abcd1234abd1234"
+  instance_type="t2.micro"
+  region =  "us-west-1"
+}
+
+ 🔹 kubernets - multi -Cluster deployment with federation 
+apiVersion: apps/v1 
+kind:deployment 
+metadata: 
+   name: devintekhab-deployment 
+   labels: 
+      app: devintekhab-app
+
+spec: 
+ replicas:2 
+    selector: 
+       matchlables 
+        app: devintekhab-app 
+    template: 
+        metadata: 
+        lables:
+           app:devintekhab-app
+           
+       spec: 
+         Containers:- 
+           name:ngnix 
+           image:ngnix 
+               ports:
+               -containersPorts:80
+
+
+
+apiVersion: v1 
+kind: service
+metadata:
+   name: devintekhab-service 
+spec: 
+    selector: app:devintekhab-app
+       ports:- 
+         protocol: TCP
+              port:80 
+              
+🔹 Jenkinsfile - deploy to MultiCluster envirtoment
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building Docker image...'
+                script {
+                    docker.build('devintekhab-web-app')
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                echo 'Running tests...'
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    if (env.CLUSTER == 'us-east') {
+                        sh 'kubectl --context=us-east apply -f kubernets/deployment.yaml'
+                    } else {
+                        sh 'kubectl --context=us-west apply -f kubernets/deployment.yaml'
+                    }
+                }
+            }
+        }
+    }
+}
+      🔹 Gitlab CI/CD pipeline -  multi-Region deployment with kubernets stages:
+
+  build
+  push
+  deply
+
+  build: stage: build script: -docker build -t devintekhab-web-app
+
+  push: stage:push script: -docker login -u "$CI_REGISTERY_USER" -p "$CI_REGISTERY_PASSWORD" -dokcer push devintekhab-wb-app
+
+
+  deploy: stage deploy script: - | if["$CI_COMMIT_REF_NAME"=="main"]; then kubectl --context=us-east apply -f keubernets/prod-deployment.yaml else luebctl --context=us-west apply -f kubernets/dev-deployment.yaml
+  
+  🔹 Dokcer
+  SHELL SCRIPT EXECUTION
+
+  # !/bin/bash echo "hellow devintekhab"
+
+  DOKCER FILE
+
+  FROM ubunto WORKDIR /opt/devintekha/script COPY start.sh /opt/devitekhab/scripts RUN chmod +x /opt/devintekhab/script/start.sh CMD ['/opt/devintekhab/scripts/start/sh']
+
+
