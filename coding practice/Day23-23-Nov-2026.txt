@@ -1,0 +1,110 @@
+Day 23 - Serverless Architecture and microservices
+
+🔹 Ansible - Deploy lambda functions using aws cli
+
+name: Deploy AWS Lambda Functions
+
+hosts: localhost
+
+tasks:
+  - name: Create Lambda Function
+    command: >
+      aws lambda create-function
+      --function-name pathnex-lambda
+      --runtime python3.8
+      --role arn:aws:iam::12345678:role/lambda-execution-role-handler
+      --handler lambda_functions.handler
+      --zip-file fileb://lambda.zip
+
+🔹Terraform - Servless API Gateway with Lambda Integration 
+
+resuorces "aws_api_gateway_rest_api" "devintekhab_api" {
+   
+  name = "devintekhab-api"
+  description = "devintekhab-api"
+
+}
+
+resuorces "aws_lambda_function" "devintekhab_lambda" {
+
+   function_name = "devintekhab-lambda"
+
+   runtime = "python.38"
+
+   role = aws_iam_role.lambda_exec_role.arn
+
+   handler = "lambda_function.lambda_handler"
+
+   filename = "lambda.zip"
+
+}
+
+resources "aws_api_gateway_integration" "lambda_integration"{
+
+    rest_api_id = aws_api_gateway_rest_api.devintekhab_api.id
+
+    resources_id = aws_api_gateway_rest_api.devintekhab_resources.id
+
+    http_method = aws_api_gateway_rest_api.devintekhab_http_method.id
+
+    integration_htytp_method = 'POST'
+
+    type = 'AWS_PROXY
+
+    uri = 'aws_lambda_function.pathnex_lambda.invoke_arn
+}
+
+🔹 Kubernets - Deploy Microservices using helm 
+  helm installing devintekahb ./microservice- chart 
+
+🔹 Jenkinsfile - Deploy Servless Application with lambda 
+
+pipeline{
+  agent any stages{
+    stage("Build"){
+       steps {
+        echo "building lambda function ..."
+        sh 'zip -r lambda.zip lambda/'
+       }
+    }
+    stage('deploy to aws lambda'){
+       steps {
+        script {
+          sh 'aws lambda update-function-code--function-name devintekhab-lambda --zip-file fileb://lambda.zip'
+        }
+       }
+    }
+  }
+}
+
+
+🔹 GitLab  CI/CD - Deploy lambda 
+functions stages
+
+build 
+deploy
+
+build:
+  stage: build
+  script: 
+  - zip -r lambda.zip lambda/
+
+deploy:
+  stage: deploy
+  script: 
+  - aws lambda update-function-code --function-name devintekhab-lambda --zip-file fileb://lambda.zip
+
+
+Multi-Stage Docker build
+
+stage 1 - Build Stage
+
+FROM maven:3.9-eclipse-temrium-17 aAS builder workdir /opt/devintekhab/java/build-build COPY.
+/opt/devintekhab/java-build/ RUN mvn clean package
+
+Stage 2 - Produvtion - stage
+
+FROM tomcar:9 WORKDIR /user/local/tomcat/webapps/ COPY --form=builder /opt/devintekhab/java-build/targret/*.war /usr/local/tomcat/webapps/ EXPOSE 8080 CMD ["catalina.sh", "run"]
+
+Real Paths
+/opt/devintekhab/java-build /usr/local/tomcat/webapps
