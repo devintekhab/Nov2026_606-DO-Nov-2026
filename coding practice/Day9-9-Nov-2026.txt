@@ -1,0 +1,98 @@
+Day 09 - docker integraion with jenkins & Gitlab 
+
+🔹 Ansible - Setup docker container for ngnix
+
+name: Setup Docker for ngnix 
+hosts: all
+become: yes
+tasks:
+   name: Run Ngni container
+   dokcer_container:
+                name: ngnix
+                source: pull
+
+name: Run ngnix container
+docker_container: 
+             name: ngnix-container
+             image: ngnix
+             state: started
+             pulished_ports:
+                - '8080:80'
+  
+🔹 Terraform - EC2 with autoscale group 
+
+resuorces 'aws_scale_group' 'example' {
+    name = 'exmaple-config'
+    image_id = 'ami-a1234abcd1234ab'
+    instance_type = 't3.meduim'
+}
+
+resuorces 'aws_scaling_group' 'example' {
+    desired_capacity = 2
+    max_size = 3
+    min_size = 1
+    voc_zone_identifier = ['subnet-12345']
+    launch_configration = aws_launch_configration.example.id
+}
+
+🔹 kubernets - Horizontal pod autoclustor
+
+apiVersion:apps/v1
+kind: deployment
+metadata:
+    name: devintekhab-deployment
+    spec:
+      replicas: 1
+    selector:
+       matchlabes:
+           apps: devintekhab-app
+           template:
+                metadata:
+                   labels:
+                     app: devitekhab-app
+                     spec:
+                       container:
+                          - name: ngnix
+                          - image: mgnix
+                          - ports:
+                          - containerPort: 80
+  
+
+
+apiVersion:autoscaling/v2
+kind:horizontalPodScaling
+metadata:
+      name: devintekhab-hap
+spec:
+   scaleTargetRef:
+         apiVersion: apps/v1
+               kind: deployment
+
+         name: devintekhab-app
+         minReplicas: 1
+         maxReplicas: 10
+         targetCPUUtilization: 50
+
+🔹 jenkins - deploy to kubernets 
+
+pipeline {
+    agent any stages {
+        stage("deploy to kubernets"){
+            steps{
+                sh 'kubectl apply -f deployment.yaml'
+            }
+        }
+    }
+}
+🔹 Gitlab CI/CD deploy to kubernets stage
+
+deploy
+
+deploy:
+  stage: deploy
+  script:
+    - kubectl apply -f kubernets/deployment.yaml
+  
+  Environment Variables 
+
+  FROM ubuntu:22.04 ENV INSTITUTE=Pathnex ENV COURSE=DevOps CMD echo "$INSTITUTE - $COURSE"
