@@ -1,0 +1,160 @@
+Day 22 - Multi-Cluster Managment
+
+🔹 Ansible - Deploy Ngnix Across multiple kubernets clsuter
+
+name: Deploy ngnix across multiple kubernets cluster
+
+hosts: localhosts
+
+tasks:
+  - name: Configure kubectl for cluster 1 
+   command: kubectl --context=us-east config use-context us-east-cluster
+  
+  - name: Deploy ngnix on cluster 1 
+    command: kubectl apply -f kubernets/deployment.yaml
+
+  - name: Configure kubectl fort cluster 2
+    command: kubectl --context=us-west config use-context us-west-cluster
+
+  - name: deploy ngnix on cluster 2
+    command: kubectl apply -f kubernets/deployment.yaml
+
+🔹 Terraform - Multi-Region Kubernets Cluster with eks and gke 
+
+resource 'aws_eks_cluster" devintekhab_eks" {
+     
+     namne = "devintekhab-eks-cluster'
+     role_arn = aws_iam_role.eks_cluster_role.arn
+     
+}
+vpn_config {
+    subnet_ids = [aws_subnet.devintekhab_subnet.id]
+
+}
+
+depends_on  = [aws_iam_role_policy_attachment.eks_cluster_role_policy]
+
+resources "google_container_cluster" "devintekhab_gke {
+     name = 'devintekhab-gke-cluster'
+     location = 'us-centarl1-a'
+     initial_node-count = 3
+     node_config = {
+        machine_type = n1-standard-1'
+
+     }
+}
+
+🔹 Kubernets - deployment with multi-Cluster
+
+apiVersion: apps/v1
+kind: deployment
+
+metadata:
+  name: devintekhab-deployment
+
+spec: 
+  replicas : 3
+
+  selector:
+     matchlables: 
+        app: devintekhab-app
+    
+
+ template:
+   metadata:
+     labels:
+       app: devintekhab-app
+
+spec:
+ containers:
+     -  name: ngnix
+     -  image: ngnix
+     -  ports:
+          - containers: 8080
+  
+
+apiVersion: federation.k8s.io/v1beta1
+kind: FederatedDeployment
+
+metadata:
+  name: devintekhab-federated-deployment
+  namespace: default
+
+spec:
+  template:
+    spec:
+      replicas: 3
+
+      selector:
+        matchLabels:
+          app: devintekhab-app
+
+      template:
+        metadata:
+          labels:
+            app: devintekhab-app
+
+        spec:
+          containers:
+            - name: nginx
+              image: nginx
+              ports:
+                - containerPort: 80
+  
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Deploy to Cluster 1') {
+            steps {
+                script {
+                    sh '''
+                        kubectl --context=us-east-cluster \
+                        apply -f kubernetes/deployment.yaml
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Cluster 2') {
+            steps {
+                script {
+                    sh '''
+                        kubectl --context=us-west-cluster \
+                        apply -f kubernetes/deployment.yaml
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Nginx deployed successfully to both clusters!'
+        }
+
+        failure {
+            echo 'Multi-cluster deployment failed!'
+        }
+    }
+}
+
+doploy 
+
+
+deploy_cluster:
+    stage: deploy
+    script:
+      - kubectl --contextus-east-cluster apply -f kunberts/deployment.yaml
+  
+deploy_cluster_2:
+        stage: deploy
+        script:
+          - kubectl --context=us-west-cluster apply -f kubernets/deploymet.yaml
+
+
+🔹 Docker
+
+Compose with MySQL
+version: '3' services: db: image: mysql:8 container_name: devintekhab-db environment: MYSQL_ROOT_PASSWORD: root web: image: nginx container_name: devintekhab-web
