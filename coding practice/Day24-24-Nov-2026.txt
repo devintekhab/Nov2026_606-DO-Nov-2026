@@ -1,0 +1,90 @@
+Day 24 - Advanced Terraform Modules and ci/cd pipeline scaling
+
+🔹Ansible - Deploy docker containers with kubernets using helm
+
+- name: Deploy docker container with helm
+  hosts: localhost
+  tasks:
+    - name: install Helm
+      command: curl https://raw.githubusercontent.com/helm/helm/master/scripts/get
+
+    - name: deploy microservices devintekhab-app ./microservices-chart
+      command: helm install infrastructre with outputs
+
+🔹 Terraform - Multi-Module Infrastcture with outputs
+modules "devintekhab_instance" {
+    source = './vpc'
+}
+module "devintekhab_instance" {
+    source = "./instance"
+    vpc_id = module.devintekhab_vpc.vpc_id
+}
+output "instance_id" {
+    value = module.devintekhab_instance.instance_id
+}
+
+🔹 Kubernets - Helm-based auto-scaling deployment
+
+apiVersion: apps/v1
+kind: deployment
+metadata:
+     name: devintekhab-web-app
+spec:
+  replicas: 3
+  selector: 
+     matchLables:
+         app" devintekhab-web-app
+  template:
+     metadata: 
+       lables:
+         app: devintekhab-web-app
+     spec:
+      containers:
+            - name: ngnix
+              image: ngnix
+              ports: 
+                - containers: 80
+  
+---
+apiVersion
+kind: HorizontalPodAutoScaler
+metadata:
+     name: devintekhab-web-app-hpa
+spec:
+  scaleTargetRef:
+       apiVersion: apps/v1
+       kind: deployment
+       name: devintekhab-web-app
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+🔹 Jenkinsfile - Scaling CI/CD Pipeline
+
+pipeline {
+    agent any
+    stages {
+        stage("scale up"){
+            steps{
+                echo "Scaling up jenkins pipeline agents for heavy workloads
+            }
+        }
+        stage("Build"){
+            steps {
+                echo "building project"
+            }
+        }
+        stage("deploy") {
+            steps {
+                echo "deploying project"
+            }
+        }
+    }
+}
+
+🔹 Dokcer 
+
+# Healthcheck
+
+FROM ngnix
+HEALTHCHECK CMD curl --fail http://localhost || exit 1
