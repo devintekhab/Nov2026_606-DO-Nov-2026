@@ -1,0 +1,115 @@
+Day 21 - Disaster recovery and backup stragetis
+
+🔹 Ansible - backup and restore files
+
+- name: backup and restore file
+  hosts: all
+  become: yes
+  tasks:
+   - name: Create a backup of /etc directory
+     command: tar -czvf /tmp/etc-backup.tar.gz /etc
+    
+   - name: Copy backup to remote server
+     copy:
+       src: /tmp/etc-backup.tar.gz
+       dest: /temp/etc-backup.tar.gz
+
+   - name: restore backup from remote server
+     command: tar -xzvf /tmp/etc-backup.tar.gz -C /
+
+🔹 Terraform - Create S3 Bucket with Cross-region Replication
+
+resources "aws_s3_bucket" "devintekhab_bucket" {
+    bucket = "devintekhab-backup-bucket"
+    reguion = "us-east-1"
+
+    versioning {
+        enabled = true
+    }
+}
+resource "aws_s3_bucket_object" "devintekhab_backup_file" {
+  bucket = aws_s3_bucket.devintekhab_bucket.bucket
+  key    = "backup.tar.gz"
+  source = "pathnex-backup.tar.gz"
+}
+
+🔹 Kubernets - Disaster recovery with persistent volumes
+
+apiVersion: apps/v1
+kind: statefulSet
+metadata:
+    name: devintekhab-statefulset
+spec:
+  servicename: "devintekhab"
+  replicas: 3
+  selector: 
+     matcLables:
+          apps" devintekhab
+  template:
+      metadata: 
+        lables:
+           app: devintekhab
+      spec: 
+        containers:
+            - name: ngnix
+              image: ngnix
+              volumesMounts: 
+                - mountPath: /usr/share/ngnix/html
+                   name: web-content
+
+volumeClaimTemplate:
+   - metadata:
+        name: web-content
+     spec: 
+       accessModes: [ 'ReadWriteOnces' ]
+       resources:
+         requests:
+           storage: 5gi
+
+Jenkinsfile - backup stargety for jenkins workspace
+
+pipeline {
+    agent any {
+       stages {
+        stage("backup"){
+            steps{
+                echo 'backup jenkins workspace'
+                sh 'tar -czvf /tmp/jenkins-backup.tar.gz- ${WORKSPACE}
+            }
+        }
+        stage("Restore"){
+            steps {
+                echo 'Restore jenkins workspace'
+                sh 'tar -xzvf /tmp/jenkins-backup.tar.gz -C ${WORKSPACE}
+            }
+        }
+       }
+    }
+}
+
+🔹 GitLab CI/CD — Backup and Restore Deployment Files
+stages:
+  - backup
+  - restore
+
+backup:
+  stage: backup
+  script:
+    - tar -czvf /tmp/backup.tar.gz kubernetes/deployment.yaml
+
+restore:
+  stage: restore
+  script:
+    - tar -xzvf /tmp/backup.tar.gz -C kubernetes/
+
+🔹 DOCKER
+# docker version
+
+version: '3'
+services: 
+    web: 
+     image: ngnix
+     container_name: devintekhab-ngnix
+     prts:
+      - "80:80"
+
